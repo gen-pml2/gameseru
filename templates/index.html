@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyberpunk Localhost Terminal Simulator</title>
+    <style>
+        body {
+            background-color: #0a0b10;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        #terminal {
+            width: 600px;
+            height: 450px;
+            background-color: #0d0e15;
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 15px #00ffcc;
+            padding: 15px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border-radius: 5px;
+        }
+        #input-area {
+            margin-top: 15px;
+            display: flex;
+            width: 630px;
+        }
+        input {
+            flex: 1;
+            background: #161925;
+            border: 1px solid #ff007f;
+            color: #fff;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 0 5px #ff007f;
+        }
+        button {
+            background: #ff007f;
+            border: none;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 5px #ff007f;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <div id="terminal"></div>
+    <div id="input-area">
+        <input type="text" id="user-command" placeholder="Ketik tebakanmu disini..." autocomplete="off" autofocus>
+        <button id="send-btn">KIRIM</button>
+    </div>
+</div>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('user-command');
+    const button = document.getElementById('send-btn');
+
+    function fetchOutput(userInput = null) {
+        let options = { method: 'GET' };
+        if (userInput !== null) {
+            options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input: userInput })
+            };
+        }
+
+        fetch('/stream', options)
+            .then(res => res.json())
+            .then(data => {
+                if (data.cleared === 'clear') {
+                    terminal.innerHTML = '';
+                }
+                terminal.innerHTML += data.output;
+                terminal.scrollTop = terminal.scrollHeight; // Auto scroll ke bawah
+                
+                if (data.game_over) {
+                    input.disabled = true;
+                    button.disabled = true;
+                    input.placeholder = "Sistem Berhenti. Refresh halaman untuk main lagi.";
+                }
+            });
+    }
+
+    // Jalankan pertama kali saat halaman dibuka
+    fetchOutput();
+
+    function kirimTebakan() {
+        const cmd = input.value;
+        if (cmd.trim() !== '') {
+            fetchOutput(cmd);
+            input.value = '';
+        }
+    }
+
+    button.addEventListener('click', kirimTebakan);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') kirimTebakan();
+    });
+</script>
+</body>
+</html>
